@@ -63,3 +63,22 @@ class custom_validations:
             raise serializers.ValidationError(
                 "ReservationID must be a positive integer"
             )
+
+    @staticmethod
+    def ItemName(value):
+        if value is None:
+            raise serializers.ValidationError("ItemName cannot be left empty")
+        if not value.isalpha():
+            raise serializers.ValidationError("ItemName must contains alphabets only")
+
+    @staticmethod
+    def Price(value):
+        if value is None:
+            raise serializers.ValidationError("ReservationID cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError(
+                "ReservationID must be a positive integer"
+            )
+
+        if isinstance(value, float) and value != int(value):
+            raise serializers.ValidationError("Float values are not allowed.")

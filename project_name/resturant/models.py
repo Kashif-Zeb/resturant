@@ -37,9 +37,9 @@ class Order(models.Model):
 
 class MenuItem(models.Model):
     Menu_itemID = models.BigAutoField(primary_key=True)
-    ItemName = models.CharField(max_length=70)
+    ItemName = models.CharField(max_length=70, unique=True, null=False)
     Description = models.TextField(max_length=255)
-    Price = models.IntegerField()
+    Price = models.PositiveBigIntegerField()
 
 
 class OrderItem(models.Model):

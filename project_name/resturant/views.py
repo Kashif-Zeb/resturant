@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -7,6 +8,7 @@ from .serializers import (
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
+    serializer_MenuItem,
     serializer_table,
     serializer_table2,
     serializer_update_table,
@@ -295,3 +297,22 @@ def update_table(request):
             )
     else:
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["POST"])
+def create_menuitem(request):
+    if request.method == "POST":
+        serializer = serializer_MenuItem(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            try:
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except IntegrityError:
+                return Response(
+                    {"error": "Item with this name already exists."},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                )
+        else:
+            return Response(
+                serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )

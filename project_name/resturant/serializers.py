@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Customer, Reservation, Table
+from .models import Customer, Reservation, Table, MenuItem
 from .validations import custom_validations as cv
 
 
@@ -71,3 +71,16 @@ class serializer_update_table(serializers.ModelSerializer):
     class Meta:
         model = Table
         fields = ["TableID", "Capacity", "Status", "ReservationID"]
+
+
+class serializer_MenuItem(serializers.ModelSerializer):
+    Menu_itemID = serializers.IntegerField(read_only=True)
+    ItemName = serializers.CharField(
+        required=True, max_length=70, validators=[cv.ItemName]
+    )
+    Description = serializers.CharField(required=True, max_length=255)
+    Price = serializers.IntegerField(required=True, validators=[cv.Price])
+
+    class Meta:
+        model = MenuItem
+        fields = "__all__"
