@@ -8,7 +8,6 @@ from .serializers import (
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
-    serializer_MenuItem,
     serializer_table,
     serializer_table2,
     serializer_update_table,
@@ -316,3 +315,18 @@ def create_menuitem(request):
             return Response(
                 serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
+
+
+@api_view(["DELETE"])
+def delete_table(request):
+    serializer=serializer_delete_table(data=request.query_params)
+    if serializer.is_valid(raise_exception=True):
+        tid=serializer.validated_data.get("TableID")
+        check=Table.objects.filter(TableID=tid).first()
+        if check:
+            check.delete()
+            return Response(f"table id {tid} is deleted successfully",status=status.HTTP_200_OK)
+        else:
+            return Response(f" table id {tid}  not exist in db",status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)

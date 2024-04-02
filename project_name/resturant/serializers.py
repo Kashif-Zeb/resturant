@@ -84,3 +84,10 @@ class serializer_MenuItem(serializers.ModelSerializer):
     class Meta:
         model = MenuItem
         fields = "__all__"
+
+
+class serializer_delete_table(serializers.ModelSerializer):
+    TableID=serializers.IntegerField(required=True)
+    class Meta:
+        model = Table
+        fields=["TableID"]

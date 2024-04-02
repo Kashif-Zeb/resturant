@@ -18,5 +18,6 @@ urlpatterns = [
     path("create_table/", views.create_table, name="create table"),
     path("get_table/", views.get_tables, name="get table"),
     path("update_table/", views.update_table, name="update table"),
+    path("delete_table/", views.delete_table, name="delete table"),
     path("create_menuitem/", views.create_menuitem, name="create menuitem"),
 ]
