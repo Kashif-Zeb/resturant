@@ -86,8 +86,32 @@ class serializer_MenuItem(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class serializer_MenuItem2(serializers.ModelSerializer):
+    Menu_itemID = serializers.IntegerField(required=False)
+    class Meta:
+        model = MenuItem
+        fields = "__all__"
+        read_only_fields =["ItemName","Description","Price"]
+
+
+
 class serializer_delete_table(serializers.ModelSerializer):
     TableID=serializers.IntegerField(required=True)
     class Meta:
         model = Table
         fields=["TableID"]
+
+
+
+
+class serializer_Update_MenuItem(serializers.ModelSerializer):
+    Menu_itemID = serializers.IntegerField(required=True)
+    ItemName = serializers.CharField(
+        required=True, max_length=70, validators=[cv.ItemName]
+    )
+    Description = serializers.CharField(required=True, max_length=255)
+    Price = serializers.IntegerField(required=True, validators=[cv.Price])
+
+    class Meta:
+        model = MenuItem
+        fields = "__all__"

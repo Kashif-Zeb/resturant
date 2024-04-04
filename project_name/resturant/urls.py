@@ -20,4 +20,6 @@ urlpatterns = [
     path("update_table/", views.update_table, name="update table"),
     path("delete_table/", views.delete_table, name="delete table"),
     path("create_menuitem/", views.create_menuitem, name="create menuitem"),
+    path("get_menuitem/", views.get_menuitem, name="get menuitem"),
+    path("update_menuitem/", views.update_menu, name="update menuitem"),
 ]

@@ -3,11 +3,15 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Customer, Reservation, Table
+from .models import Customer, MenuItem, Reservation, Table
 from .serializers import (
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
+    serializer_MenuItem,
+    serializer_MenuItem2,
+    serializer_Update_MenuItem,
+    serializer_delete_table,
     serializer_table,
     serializer_table2,
     serializer_update_table,
@@ -330,3 +334,35 @@ def delete_table(request):
             return Response(f" table id {tid}  not exist in db",status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["GET"])
+def get_menuitem(request):
+    serializer=serializer_MenuItem2(data=request.query_params)
+    if serializer.is_valid(raise_exception=True):
+        menuid=serializer.validated_data.get("Menu_itemID")
+        if menuid:
+            aa =MenuItem.objects.filter(Menu_itemID=menuid).first() 
+            return Response(serializer_MenuItem2(aa).data,status=status.HTTP_200_OK)
+        else:
+            all=MenuItem.objects.all()
+            data=serializer_MenuItem2(all,many=True)
+            return Response(data.data,status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY) 
+    
+
+
+@api_view(["PUT"])
+def update_menu(request):
+    serializer=serializer_Update_MenuItem(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        Menu_itemID=serializer.validated_data.get("Menu_itemID")
+        item=MenuItem.objects.filter(Menu_itemID=Menu_itemID).first()
+        if item:
+            serializer_data=serializer_Update_MenuItem(instance=item,data=serializer.validated_data,partial=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(f"menu_itemID {Menu_itemID} not exist",status=status.HTTP_200_OK)
+    else:
+        Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
