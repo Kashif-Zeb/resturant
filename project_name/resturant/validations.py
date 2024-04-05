@@ -82,3 +82,33 @@ class custom_validations:
 
         if isinstance(value, float) and value != int(value):
             raise serializers.ValidationError("Float values are not allowed.")
+
+    @staticmethod
+    def CustomerID(value):
+        if value is None:
+            raise serializers.ValidationError("CustomerID cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("CustomerID must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("CustomerID must be a positive integer")
+
+    @staticmethod
+    def TableID(value):
+        if value is None:
+            raise serializers.ValidationError("TableID cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("TableID must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("TableID must be a positive integer")
+
+    @staticmethod
+    def Amount(value):
+        if value is None:
+            raise serializers.ValidationError("Amount cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("Amount must be a positive integer")

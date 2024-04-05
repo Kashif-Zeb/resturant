@@ -10,6 +10,7 @@ from .serializers import (
     Reservations_with_customer,
     serializer_MenuItem,
     serializer_MenuItem2,
+    serializer_Order,
     serializer_Update_MenuItem,
     serializer_delete_table,
     serializer_table,
@@ -323,46 +324,107 @@ def create_menuitem(request):
 
 @api_view(["DELETE"])
 def delete_table(request):
-    serializer=serializer_delete_table(data=request.query_params)
+    serializer = serializer_delete_table(data=request.query_params)
     if serializer.is_valid(raise_exception=True):
-        tid=serializer.validated_data.get("TableID")
-        check=Table.objects.filter(TableID=tid).first()
+        tid = serializer.validated_data.get("TableID")
+        check = Table.objects.filter(TableID=tid).first()
         if check:
             check.delete()
-            return Response(f"table id {tid} is deleted successfully",status=status.HTTP_200_OK)
+            return Response(
+                f"table id {tid} is deleted successfully", status=status.HTTP_200_OK
+            )
         else:
-            return Response(f" table id {tid}  not exist in db",status=status.HTTP_200_OK)
+            return Response(
+                f" table id {tid}  not exist in db", status=status.HTTP_200_OK
+            )
     else:
-        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 @api_view(["GET"])
 def get_menuitem(request):
-    serializer=serializer_MenuItem2(data=request.query_params)
+    serializer = serializer_MenuItem2(data=request.query_params)
     if serializer.is_valid(raise_exception=True):
-        menuid=serializer.validated_data.get("Menu_itemID")
+        menuid = serializer.validated_data.get("Menu_itemID")
         if menuid:
-            aa =MenuItem.objects.filter(Menu_itemID=menuid).first() 
-            return Response(serializer_MenuItem2(aa).data,status=status.HTTP_200_OK)
+            aa = MenuItem.objects.filter(Menu_itemID=menuid).first()
+            return Response(serializer_MenuItem2(aa).data, status=status.HTTP_200_OK)
         else:
-            all=MenuItem.objects.all()
-            data=serializer_MenuItem2(all,many=True)
-            return Response(data.data,status=status.HTTP_200_OK)
+            all = MenuItem.objects.all()
+            data = serializer_MenuItem2(all, many=True)
+            return Response(data.data, status=status.HTTP_200_OK)
     else:
-        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY) 
-    
+        return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 @api_view(["PUT"])
 def update_menu(request):
-    serializer=serializer_Update_MenuItem(data=request.data)
+    serializer = serializer_Update_MenuItem(data=request.data)
     if serializer.is_valid(raise_exception=True):
-        Menu_itemID=serializer.validated_data.get("Menu_itemID")
-        item=MenuItem.objects.filter(Menu_itemID=Menu_itemID).first()
+        Menu_itemID = serializer.validated_data.get("Menu_itemID")
+        item = MenuItem.objects.filter(Menu_itemID=Menu_itemID).first()
         if item:
-            serializer_data=serializer_Update_MenuItem(instance=item,data=serializer.validated_data,partial=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            serializer_data = serializer_Update_MenuItem(
+                instance=item, data=serializer.validated_data, partial=True
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(f"menu_itemID {Menu_itemID} not exist",status=status.HTTP_200_OK)
+            return Response(
+                f"menu_itemID {Menu_itemID} not exist", status=status.HTTP_200_OK
+            )
     else:
-        Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["DELETE"])
+def delete_menu(request):
+    serializer = serializer_MenuItem2(data=request.query_params)
+    if serializer.is_valid():
+        mid = serializer.validated_data.get("Menu_itemID")
+        data = MenuItem.objects.filter(Menu_itemID=mid).first()
+        if data:
+            data.delete()
+            return Response(
+                f"Menu_ItemID {mid} is deleted successfully", status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                f" Menu_ItemID {mid} not found",
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+    else:
+        return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["POST"])
+def create_order(request):
+    serializer_class = serializer_Order
+    serializer = serializer_class(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        cid = serializer.validated_data.get("CustomerID")
+        customer = Customer.objects.filter(CustomerID=cid).first()
+        if customer:
+            tid = serializer.validated_data.get("TableID")
+            reservation = Reservation.objects.filter(CustomerID=cid).first()
+            if reservation:
+                rid = reservation.ReservationID
+                table = Table.objects.filter(TableID=tid, ReservationID=rid).first()
+                if table:
+                    serializer.create(
+                        validated_data={
+                            "CustomerID": customer,
+                            "TableID": table,
+                            "Date": serializer.validated_data.get("Date"),
+                            "Time": serializer.validated_data.get("Time"),
+                            "Amount": serializer.validated_data.get("Amount"),
+                        }
+                    )
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(
+                    f"your table is not exist kindly  do reservation",
+                    status=status.HTTP_200_OK,
+                )
+        else:
+            return Response(f"customerid {cid} not found", status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)

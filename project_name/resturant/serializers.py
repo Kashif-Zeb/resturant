@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Customer, Reservation, Table, MenuItem
+from .models import Customer, Order, Reservation, Table, MenuItem
 from .validations import custom_validations as cv
 
 
@@ -88,20 +88,19 @@ class serializer_MenuItem(serializers.ModelSerializer):
 
 class serializer_MenuItem2(serializers.ModelSerializer):
     Menu_itemID = serializers.IntegerField(required=False)
+
     class Meta:
         model = MenuItem
         fields = "__all__"
-        read_only_fields =["ItemName","Description","Price"]
-
+        read_only_fields = ["ItemName", "Description", "Price"]
 
 
 class serializer_delete_table(serializers.ModelSerializer):
-    TableID=serializers.IntegerField(required=True)
+    TableID = serializers.IntegerField(required=True)
+
     class Meta:
         model = Table
-        fields=["TableID"]
-
-
+        fields = ["TableID"]
 
 
 class serializer_Update_MenuItem(serializers.ModelSerializer):
@@ -114,4 +113,17 @@ class serializer_Update_MenuItem(serializers.ModelSerializer):
 
     class Meta:
         model = MenuItem
+        fields = "__all__"  # exclude = ['users']
+
+
+class serializer_Order(serializers.ModelSerializer):
+    OrderID = serializers.IntegerField(read_only=True)
+    CustomerID = serializers.IntegerField(required=True, validators=[cv.CustomerID])
+    TableID = serializers.IntegerField(required=True, validators=[cv.TableID])
+    Date = serializers.DateField(required=True)
+    Time = serializers.TimeField(required=True)
+    Amount = serializers.IntegerField(required=True, validators=[cv.Amount])
+
+    class Meta:
+        model = Order
         fields = "__all__"

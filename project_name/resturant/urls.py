@@ -22,4 +22,6 @@ urlpatterns = [
     path("create_menuitem/", views.create_menuitem, name="create menuitem"),
     path("get_menuitem/", views.get_menuitem, name="get menuitem"),
     path("update_menuitem/", views.update_menu, name="update menuitem"),
+    path("delete_menuitem/", views.delete_menu, name="delete menuitem"),
+    path("create_order/", views.create_order, name="create order"),
 ]
