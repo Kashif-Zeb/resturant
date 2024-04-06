@@ -127,3 +127,23 @@ class serializer_Order(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = "__all__"
+
+
+class get_serializer_order(serializers.ModelSerializer):
+    OrderID = serializers.IntegerField(required=True)
+    Table = serializer_table2(source="TableID", required=False)
+    Date = serializers.DateField(required=False)
+    Time = serializers.TimeField(required=False)
+    Amount = serializers.IntegerField(
+        required=False,
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            "OrderID",
+            "Date",
+            "Time",
+            "Amount",
+            "Table",
+        ]

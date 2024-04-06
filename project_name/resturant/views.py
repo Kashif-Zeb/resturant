@@ -3,11 +3,12 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Customer, MenuItem, Reservation, Table
+from .models import Customer, MenuItem, Order, Reservation, Table
 from .serializers import (
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
+    get_serializer_order,
     serializer_MenuItem,
     serializer_MenuItem2,
     serializer_Order,
@@ -428,3 +429,17 @@ def create_order(request):
         else:
             return Response(f"customerid {cid} not found", status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["GET"])
+def get_order(request):
+    serializer = get_serializer_order(data=request.query_params)
+    if serializer.is_valid():
+        oid = serializer.validated_data.get("OrderID")
+        order = Order.objects.filter(OrderID=oid).first()
+        if order:
+            return Response(get_serializer_order(order).data, status=status.HTTP_200_OK)
+        else:
+            return Response(f"orderid {oid} not found", status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
