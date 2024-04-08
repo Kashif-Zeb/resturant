@@ -3,8 +3,9 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Customer, MenuItem, Order, Reservation, Table
+from .models import Customer, MenuItem, Order, OrderItem, Reservation, Table
 from .serializers import (
+    OrderItem_serializer,
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
@@ -441,5 +442,54 @@ def get_order(request):
             return Response(get_serializer_order(order).data, status=status.HTTP_200_OK)
         else:
             return Response(f"orderid {oid} not found", status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@api_view(["POST"])
+def create_orderitem(request):
+    serializer_class = OrderItem_serializer
+    serializer = serializer_class(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        oid = serializer.validated_data["OrderID"]
+        # orders = Order.objects.filter(OrderID=oid).first()
+        if oid:
+            menuid = serializer.validated_data["Menu_itemID"]
+            # Menu = MenuItem.objects.filter(Menu_itemID=menuid).first()
+            if menuid:
+                pr = menuid.Price
+                qty = serializer.validated_data["Quantity"]
+                totalprice = pr * qty
+
+                order_item = serializer.create(
+                    validated_data={
+                        "OrderID": oid,
+                        "Menu_itemID": menuid,
+                        "Quantity": qty,
+                        "Price": totalprice,
+                    }
+                )
+                # serializer.save(
+                #     OrderID=order, Menu_itemID=Menu, Quantity=qty, Price=totalprice
+                # )
+                new_order_item = OrderItem.objects.get(
+                    Order_item_ID=order_item.Order_item_ID
+                )
+
+                # Serialize the newly created order item
+                serialized_order_item = serializer_class(new_order_item)
+                return Response(
+                    serialized_order_item.data,
+                    status=status.HTTP_201_CREATED,
+                )
+            else:
+                return Response(
+                    f"menuid {menuid} not found",
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                )
+        else:
+            return Response(
+                f"order id {oid} not found", status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
     else:
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)

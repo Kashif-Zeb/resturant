@@ -25,4 +25,5 @@ urlpatterns = [
     path("delete_menuitem/", views.delete_menu, name="delete menuitem"),
     path("create_order/", views.create_order, name="create order"),
     path("get_order/", views.get_order, name="get order"),
+    path("create_orderitem/", views.create_orderitem, name="create orderitem"),
 ]

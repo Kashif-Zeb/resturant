@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Customer, Order, Reservation, Table, MenuItem
+from .models import Customer, Order, OrderItem, Reservation, Table, MenuItem
 from .validations import custom_validations as cv
 
 
@@ -147,3 +147,52 @@ class get_serializer_order(serializers.ModelSerializer):
             "Amount",
             "Table",
         ]
+
+
+class OrderItem_serializer(serializers.ModelSerializer):
+    # Order_item_ID = serializers.IntegerField(read_only=True)
+    OrderID = serializers.DjangoModelField(validators=[cv.OrderID])
+    Menu_itemID = serializers.DjangoModelField(validators=[cv.Quantity])
+    Quantity = serializers.IntegerField(required=True, validators=[cv.Quantity])
+    # Price = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = OrderItem
+        fields = ["Order_item_ID", "OrderID", "Menu_itemID", "Quantity", "Price"]
+        read_only_fields = ("Order_item_ID", "Price")
+
+    # def create(self, validated_data):
+    #     print("Validated Data:", validated_data)
+    #     try:
+    #         order_id = validated_data["OrderID"]  # Accessing the primary key
+    #         order = Order.objects.get(OrderID=order_id)
+    #         menu_id = validated_data["Menu_itemID"]  # Accessing the primary key
+    #         menu = MenuItem.objects.get(Menu_itemID=menu_id)
+    #         qty = validated_data["Quantity"]
+    #         price = menu.Price * qty
+    #         order_item = OrderItem.objects.create(
+    #             OrderID=order.OrderID,
+    #             Menu_itemID=menu.Menu_itemID,
+    #             Quantity=qty,
+    #             Price=price,
+    #         )
+    #         return super().create(validated_data)
+    #     except Order.DoesNotExist:
+    #         raise serializers.ValidationError("Invalid Order reference")
+    #     except MenuItem.DoesNotExist:
+    #         raise serializers.ValidationError("Invalid MenuItem reference")
+
+    # def to_representation(self, instance):
+    #     response = super().to_representation(instance)
+    #     response["Order_item_ID"] = instance.Order_item_ID
+    #     response["Price"] = instance.Price
+    #     return response
+
+    # write_only_fields = ("Price",)
+
+    # read_only_fields = ('is_active', 'is_staff')
+    # extra_kwargs = {
+    #     'security_question': {'write_only': True},
+    #     'security_question_answer': {'write_only': True},
+    #     'password': {'write_only': True}
+    # }

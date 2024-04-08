@@ -112,3 +112,33 @@ class custom_validations:
 
         if not isinstance(value, int):
             raise serializers.ValidationError("Amount must be a positive integer")
+
+    @staticmethod
+    def Quantity(value):
+        if value is None:
+            raise serializers.ValidationError("Quantity cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("Quantity must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("Quantity must be a positive integer")
+
+    @staticmethod
+    def Menu_itemID(value):
+        if value is None:
+            raise serializers.ValidationError("Menu_itemID cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("Menu_itemID must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("Menu_itemID must be a positive integer")
+
+    @staticmethod
+    def OrderID(value):
+        if value is None:
+            raise serializers.ValidationError("OrderID cannot be left empty")
+        if value <= 0:
+            raise serializers.ValidationError("OrderID must be a positive integer")
+
+        if not isinstance(value, int):
+            raise serializers.ValidationError("OrderID must be a positive integer")

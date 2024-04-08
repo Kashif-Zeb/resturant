@@ -47,4 +47,4 @@ class OrderItem(models.Model):
     OrderID = models.ForeignKey(Order, on_delete=models.CASCADE)
     Menu_itemID = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     Quantity = models.IntegerField()
-    Price = models.DecimalField(max_digits=10, decimal_places=2)
+    Price = models.IntegerField()
