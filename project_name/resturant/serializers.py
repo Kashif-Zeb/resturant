@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Customer, Order, OrderItem, Reservation, Table, MenuItem
+from .models import Customer, Order, OrderItem, Registration, Reservation, Table, MenuItem
 from .validations import custom_validations as cv
 
 
@@ -196,3 +196,22 @@ class OrderItem_serializer(serializers.ModelSerializer):
     #     'security_question_answer': {'write_only': True},
     #     'password': {'write_only': True}
     # }
+
+
+class Registration_serializer(serializers.ModelSerializer):
+    Regid=serializers.IntegerField(read_only=True)
+    Firstname=serializers.CharField(max_length=50)
+    Lastname=serializers.CharField(max_length=50)
+    Email=serializers.EmailField(max_length=50)
+    Password=serializers.CharField(max_length=50)
+    # Token=serializers.CharField(read_only=True)
+    class Meta:
+        model = Registration
+        fields = ["Regid","Firstname","Lastname","Email","Password"]
+
+
+
+class login_serializer(serializers.Serializer):
+    Email=serializers.EmailField(max_length=50)
+    Password=serializers.CharField(max_length=50)
+    Token=serializers.CharField(read_only=True)

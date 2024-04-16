@@ -1,15 +1,24 @@
+from datetime import datetime, timedelta
+from functools import wraps 
 from django.db import IntegrityError
 from django.shortcuts import render
+import jwt
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,authentication_classes, permission_classes,throttle_classes
 from rest_framework.response import Response
-from .models import Customer, MenuItem, Order, OrderItem, Reservation, Table
+from rest_framework.throttling import UserRateThrottle
+from django.conf import settings
+
+from .signals import send_login_notification
+from .models import Customer, MenuItem, Order, OrderItem, Registration, Reservation, Table
 from .serializers import (
     OrderItem_serializer,
+    Registration_serializer,
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
     get_serializer_order,
+    login_serializer,
     serializer_MenuItem,
     serializer_MenuItem2,
     serializer_Order,
@@ -21,10 +30,86 @@ from .serializers import (
 )
 from django.http import HttpResponse, JsonResponse
 from rest_framework.views import APIView
-
-
+from rest_framework.authentication import BasicAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.hashers import check_password
 # Create your views here.
 
+
+def jwt_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return JsonResponse({'error': 'Token missing'}, status=401)
+        try:
+            payload = jwt.decode(token.split()[1], settings.SECRET_KEY, algorithms=['HS256'])
+            email = payload['email']
+            # Here you can perform additional checks, e.g., verify user existence
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({'error': 'Token expired'}, status=401)
+        except jwt.InvalidTokenError:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapped_view
+@api_view(["POST"])
+def registeration(request):
+    serializer=Registration_serializer(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    
+
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken
+    refresh = refresh.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+def login(request):
+    serializer=login_serializer(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        email=serializer.validated_data["Email"]
+        password=serializer.validated_data["Password"]
+        
+        User = Registration.objects.filter(Email=email,Password=password).first() 
+
+        if User is None:  # Checking if user is None
+            return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        # if check_password(password, User.Password):
+        #     return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        refresh = RefreshToken
+        refresh = refresh.for_user(User)
+        send_login_notification(sender=None, request=request, user=User)
+        return JsonResponse({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
+
+        # expiration_time = datetime.utcnow() + timedelta(days=1)  
+        # payload = {
+        #     'email': email,
+        #     'exp': expiration_time  
+        # }
+        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        # return JsonResponse({'token': token})
+        
+        
+    else:
+        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 @api_view(["POST"])
 def insert_customer_in_db(request):
@@ -37,6 +122,10 @@ def insert_customer_in_db(request):
 
 
 @api_view(["GET"])
+# @authentication_classes([BasicAuthentication])
+@permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
+# @jwt_required
 def get_cust_data(request):
     cid = request.query_params.get("id")
     if cid is not None:

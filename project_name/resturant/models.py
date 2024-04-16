@@ -1,7 +1,18 @@
 from django.db import models
 
 
+
+
 # Create your models here.
+
+
+
+class Registration(models.Model):
+    Regid=models.BigAutoField(primary_key=True)
+    Firstname=models.CharField(max_length=50)
+    Lastname=models.CharField(max_length=50)
+    Email=models.EmailField(max_length=50,null=False,unique=True)
+    Password=models.CharField(max_length=50)
 class Customer(models.Model):
     CustomerID = models.BigAutoField(primary_key=True)
     Customer_name = models.CharField(max_length=70)

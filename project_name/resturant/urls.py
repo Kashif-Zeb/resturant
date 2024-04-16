@@ -26,4 +26,6 @@ urlpatterns = [
     path("create_order/", views.create_order, name="create order"),
     path("get_order/", views.get_order, name="get order"),
     path("create_orderitem/", views.create_orderitem, name="create orderitem"),
+    path("registration/", views.registeration, name="registeration"),
+    path("login/", views.login, name="login"),
 ]

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Customer, Reservation, Table, Order, OrderItem, MenuItem
+from .models import Customer, Registration, Reservation, Table, Order, OrderItem, MenuItem
 
 
 # Register your models here.
@@ -32,3 +32,8 @@ class menuitem_page(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItems_page(admin.ModelAdmin):
     list_display = ["Order_item_ID", "OrderID", "Menu_itemID", "Quantity", "Price"]
+
+
+@admin.register(Registration)
+class registration_page(admin.ModelAdmin):
+    list_display = ["Regid","Firstname","Lastname","Email","Password"]
