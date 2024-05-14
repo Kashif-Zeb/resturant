@@ -215,3 +215,27 @@ class login_serializer(serializers.Serializer):
     Email=serializers.EmailField(max_length=50)
     Password=serializers.CharField(max_length=50)
     Token=serializers.CharField(read_only=True)
+
+
+
+class Serializer_reservation_for_modelsetview(serializers.ModelSerializer):
+    CustomerID =serializers.DjangoModelField()
+    class Meta:
+        model = Reservation
+        fields = ['id', 'CustomerID', 'Time', 'Date', 'Number_of_guest']
+
+
+class upload_serializer(serializers.Serializer):
+    file=serializers.FileField()
+    def validate_file(self, value):
+        # Get the file extension
+        file_extension = value.name.split('.')[-1].lower()
+
+        # Check if the file extension is either 'xlsx' or 'txt'
+        if file_extension not in ['xlsx', 'txt']:
+            raise serializers.ValidationError("Only .xlsx or .txt files are allowed.")
+
+        return value
+
+class serializer_download(serializers.Serializer):
+    filename = serializers.CharField(max_length=50)

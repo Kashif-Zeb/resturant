@@ -18,5 +18,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from resturant.urls import urlpatterns as resturant_urls
+from resturant.urls import router
 
 urlpatterns = [path("admin/", admin.site.urls), path("core/", include(resturant_urls))]

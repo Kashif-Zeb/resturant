@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta
-from functools import wraps 
+from functools import wraps
+import os 
 from django.db import IntegrityError
 from django.shortcuts import render
 import jwt
-from rest_framework import status
+from marshmallow import ValidationError
+from rest_framework import status,pagination
 from rest_framework.decorators import api_view,authentication_classes, permission_classes,throttle_classes
 from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
+from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
 from django.conf import settings
 
 from .signals import send_login_notification
@@ -17,6 +19,7 @@ from .serializers import (
     Serializer_customer,
     Serializer_reservation,
     Reservations_with_customer,
+    Serializer_reservation_for_modelsetview,
     get_serializer_order,
     login_serializer,
     serializer_MenuItem,
@@ -24,11 +27,13 @@ from .serializers import (
     serializer_Order,
     serializer_Update_MenuItem,
     serializer_delete_table,
+    serializer_download,
     serializer_table,
     serializer_table2,
     serializer_update_table,
+    upload_serializer,
 )
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from rest_framework.views import APIView
 from rest_framework.authentication import BasicAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -36,6 +41,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.hashers import check_password
+from .tasks import write_order
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 # Create your views here.
 
 
@@ -202,33 +213,36 @@ def create_reservation(request):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-class ReservationView(APIView):
-    def get(self, request):
-        rid = request.query_params.get("Rid")
-        if rid is not None:
-            if rid.isdigit():
-                reservation = Reservation.objects.filter(ReservationID=rid).first()
-                if reservation:
-                    serial = Reservations_with_customer(reservation)
-                    return Response(
-                        serial.data,
-                        status=status.HTTP_200_OK,
-                    )
-                else:
-                    return Response(
-                        f"Reservation with ID {rid} does not exist.",
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
+# class ReservationView(APIView):
+@api_view(['GET'])
+def get(request):
+    rid = request.query_params.get("Rid")
+    if rid is not None:
+        if rid.isdigit():
+            reservation = Reservation.objects.filter(ReservationID=rid).first()
+            if reservation:
+                serial = Reservations_with_customer(reservation)
+                
+                return Response(
+                    serial.data,
+                    status=status.HTTP_200_OK,
+                )
             else:
                 return Response(
-                    "Rid must be a positive integer.",
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Reservation with ID {rid} does not exist.",
+                    status=status.HTTP_404_NOT_FOUND,
                 )
-
         else:
-            reservation = Reservation.objects.all()
-            serial = Reservations_with_customer(reservation, many=True)
-            return Response(serial.data, status=status.HTTP_200_OK)
+            return Response(
+                "Rid must be a positive integer.",
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+    else:
+        reservation = Reservation.objects.all()
+        serial = Reservations_with_customer(reservation, many=True)
+        result = write_order.delay(serial.data)
+        return Response(serial.data, status=status.HTTP_200_OK)
 
 
 @api_view(["PUT"])
@@ -582,3 +596,100 @@ def create_orderitem(request):
             )
     else:
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+class CustomPagination(pagination.PageNumberPagination):
+    page_size = 3  # Set the number of reservations per page
+    page_size_query_param = 'page_size'  # Query parameter for page size
+    max_page_size = 100
+class Reservation_model_set(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
+    serializer_class = Serializer_reservation_for_modelsetview
+    pagination_class = CustomPagination
+    # @method_decorator(cache_page(60))
+    # def dispatch(self, *args, **kwargs):
+    #     return super().dispatch(*args, **kwargs)
+    # def get_queryset(self):
+    #     check = cache.get('reservation')
+    #     if check is None:
+    #         data = Reservation.objects.all()
+    #         cache.set('reservation',data,timeout=60)
+    #         check = cache.get('reservation')
+    #     return check
+    # throttle_classes = [UserRateThrottle]
+    # @action(detail=False, methods=['post'])
+    # def perform_create(self, serializer):
+    #     CustomerID = self.request.data.get('CustomerID')
+    #     if Customer.objects.filter(pk=CustomerID).exists():
+    #         serializer.save()
+    #     else:
+    #         raise ValidationError({"error": "Customer with provided ID does not exist"})
+    # @action(detail=False, methods=['put'])
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     custoemrid=request.data.get("CustomerID")
+    #     if Customer.objects.filter(pk=custoemrid).exists():
+    #         serializer = self.get_serializer(instance, data=request.data)
+    #         serializer.is_valid(raise_exception=True)
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     else:
+    #         return Response("customer not found",status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    # def perform_update(self, request, pk=None):
+    #     try:
+    #         CustomerID = request.data.get('CustomerID')
+    #         if Customer.objects.filter(pk=CustomerID).exists():
+    #             instance = self.get_object()
+    #             serializer = self.get_serializer(instance, data=request.data)
+    #             serializer.is_valid(raise_exception=True)
+    #             serializer.save()
+    #             return Response(serializer.data)
+    #     except (ValidationError, PermissionError) as exc:
+    #         return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
+    # @action(detail=False, methods=['get'])
+    # def get_queryset(self):
+    #     ReservationID = self.request.query_params.get('ReservationID')
+    #     if ReservationID:
+    #         queryset = Reservation.objects.filter(ReservationID=ReservationID)
+    #     else:
+    #         queryset = Reservation.objects.all()
+    #     return queryset
+    
+    # def destroy(self):
+    #     ReservationID = self.request.query_params.get('ReservationID')
+    #     if ReservationID:
+    #         queryset = Reservation.objects.filter(ReservationID=ReservationID)
+    #         queryset.delete()
+    #         return Response(f"reservation {ReservationID} is deleted successfully",status=status.HTTP_200_OK)
+
+
+UPLOAD_DIR = 'uploads/'
+
+@api_view(["POST"])
+def upload_file(request):
+    serializer = upload_serializer(data=request.data)
+    if serializer.is_valid():
+        user_folder = "userfiles"  # Assuming this is the user folder
+        uploaded_file = request.FILES.get('file')
+        if uploaded_file:
+            file_name = uploaded_file.name
+            user_dir = os.path.join(UPLOAD_DIR, user_folder)
+            os.makedirs(user_dir, exist_ok=True)  # Create user folder if it doesn't exist
+            file_path = os.path.join(user_dir, file_name)
+            with open(file_path, 'wb+') as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+            return Response(f"Your file {file_name} is uploaded successfully", status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+@api_view(["GET"])
+def download_file(request):
+    serializer = serializer_download(data=request.query_params)
+    if serializer.is_valid(raise_exception=True):
+        user_folder = "userfiles"
+        user_dir = os.path.join(UPLOAD_DIR,user_folder)
+        file_path = os.path.join(user_dir, serializer.validated_data.get("filename"))
+        if os.path.exists(file_path):
+            return FileResponse(open(file_path, 'rb'), as_attachment=True)
+        else:
+            return JsonResponse({'error': 'File not found'}, status=404)

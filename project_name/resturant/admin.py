@@ -1,39 +1,39 @@
-from django.contrib import admin
+# from django.contrib import admin
 
-from .models import Customer, Registration, Reservation, Table, Order, OrderItem, MenuItem
-
-
-# Register your models here.
-@admin.register(Customer)
-class customer_page(admin.ModelAdmin):
-    list_display = ["CustomerID", "Customer_name", "Email", "PhoneNumber"]
+# from .models import Customer, Registration, Reservation, Table, Order, OrderItem, MenuItem
 
 
-@admin.register(Reservation)
-class reservation_page(admin.ModelAdmin):
-    list_display = ["ReservationID", "CustomerID", "Time", "Date", "Number_of_guest"]
+# # Register your models here.
+# @admin.register(Customer)
+# class customer_page(admin.ModelAdmin):
+#     list_display = ["CustomerID", "Customer_name", "Email", "PhoneNumber"]
 
 
-@admin.register(Table)
-class table_page(admin.ModelAdmin):
-    list_display = ["TableID", "Capacity", "Status", "ReservationID"]
+# @admin.register(Reservation)
+# class reservation_page(admin.ModelAdmin):
+#     list_display = ["ReservationID", "CustomerID", "Time", "Date", "Number_of_guest"]
 
 
-@admin.register(Order)
-class order_page(admin.ModelAdmin):
-    list_display = ["OrderID", "CustomerID", "TableID", "Date", "Time", "Amount"]
+# @admin.register(Table)
+# class table_page(admin.ModelAdmin):
+#     list_display = ["TableID", "Capacity", "Status", "ReservationID"]
 
 
-@admin.register(MenuItem)
-class menuitem_page(admin.ModelAdmin):
-    list_display = ["Menu_itemID", "ItemName", "Description", "Price"]
+# @admin.register(Order)
+# class order_page(admin.ModelAdmin):
+#     list_display = ["OrderID", "CustomerID", "TableID", "Date", "Time", "Amount"]
 
 
-@admin.register(OrderItem)
-class OrderItems_page(admin.ModelAdmin):
-    list_display = ["Order_item_ID", "OrderID", "Menu_itemID", "Quantity", "Price"]
+# @admin.register(MenuItem)
+# class menuitem_page(admin.ModelAdmin):
+#     list_display = ["Menu_itemID", "ItemName", "Description", "Price"]
 
 
-@admin.register(Registration)
-class registration_page(admin.ModelAdmin):
-    list_display = ["Regid","Firstname","Lastname","Email","Password"]
+# @admin.register(OrderItem)
+# class OrderItems_page(admin.ModelAdmin):
+#     list_display = ["Order_item_ID", "OrderID", "Menu_itemID", "Quantity", "Price"]
+
+
+# @admin.register(Registration)
+# class registration_page(admin.ModelAdmin):
+#     list_display = ["Regid","Firstname","Lastname","Email","Password"]

@@ -1,6 +1,11 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 from . import views
+from .views import Reservation_model_set
+router = DefaultRouter()
+router.register("Reservation",views.Reservation_model_set)
+# router.register('Reservation/<int:pk>/', views.Reservation_model_set)
 
 urlpatterns = [
     path("insert_cust_data/", views.insert_customer_in_db, name="insert_customer_data"),
@@ -10,7 +15,7 @@ urlpatterns = [
     path("inset_reservation/", views.create_reservation, name="inserting reservations"),
     path(
         "get_reservation/",
-        views.ReservationView.as_view(),
+        views.get,
         name="get single and all both",
     ),
     path("update_revervation/", views.update_reservation, name="update reservation"),
@@ -28,4 +33,8 @@ urlpatterns = [
     path("create_orderitem/", views.create_orderitem, name="create orderitem"),
     path("registration/", views.registeration, name="registeration"),
     path("login/", views.login, name="login"),
+    path("",include(router.urls)),
+    path("upload_file/",views.upload_file,name="upload api"),
+    path("download_file/",views.download_file,name="download api"),
 ]
+# Include the router.urls separately
